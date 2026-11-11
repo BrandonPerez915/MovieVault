@@ -9,7 +9,7 @@ from typing import Dict, Any
 from pymongo.database import Database
 from pymongo import ASCENDING, DESCENDING, TEXT
 
-from connection import MongoDBConnection
+from db.mongodb.connection import MongoDBConnection
 
 # JSON SCHEMA VALIDATORS
 ACTORS_VALIDATOR: Dict[str, Any] = {
