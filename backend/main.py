@@ -102,9 +102,7 @@ def submenu_activity() -> None:
         print("FEED DE ACTIVIDAD Y RESEÑAS RECIENTES:")
         print("  1. Reseñas más recientes publicadas por la comunidad")
         print("  2. Reseñas recientes de amigos y usuarios que sigues")
-        print("  3. Stream de actividad en tiempo real (películas vistas y calificaciones)")
-        print("  4. Registro de interacciones y likes recientes")
-        print("  5. Películas en tendencia / más vistas de la semana")
+        print("  3. Registro de interacciones y likes recientes")
         print("  0. <-- Volver al menú principal")
         print("=" * 72)
 
@@ -119,13 +117,7 @@ def submenu_activity() -> None:
             print("\n[Sección Activa] Has entrado a: Reseñas recientes de amigos y seguidos.")
             pass
         elif choice == "3":
-            print("\n[Sección Activa] Has entrado a: Stream de actividad en tiempo real.")
-            pass
-        elif choice == "4":
             print("\n[Sección Activa] Has entrado a: Registro de interacciones y likes recientes.")
-            pass
-        elif choice == "5":
-            print("\n[Sección Activa] Has entrado a: Películas en tendencia de la semana.")
             pass
         else:
             print("\n[!] Opción inválida.")
