@@ -92,6 +92,48 @@ def submenu_reviews() -> None:
 
 
 # ==============================================================================
+# SUBMENÚ: ACTIVIDAD RECIENTE Y FEED
+# ==============================================================================
+
+def submenu_activity() -> None:
+    while True:
+        clear_screen()
+        print_banner("Módulo: Actividad Reciente y Feed")
+        print("FEED DE ACTIVIDAD Y RESEÑAS RECIENTES:")
+        print("  1. Reseñas más recientes publicadas por la comunidad")
+        print("  2. Reseñas recientes de amigos y usuarios que sigues")
+        print("  3. Stream de actividad en tiempo real (películas vistas y calificaciones)")
+        print("  4. Registro de interacciones y likes recientes")
+        print("  5. Películas en tendencia / más vistas de la semana")
+        print("  0. <-- Volver al menú principal")
+        print("=" * 72)
+
+        choice = input("Selecciona una opción [0-5]: ").strip()
+
+        if choice == "0":
+            break
+        elif choice == "1":
+            print("\n[Sección Activa] Has entrado a: Reseñas más recientes de la comunidad.")
+            pass
+        elif choice == "2":
+            print("\n[Sección Activa] Has entrado a: Reseñas recientes de amigos y seguidos.")
+            pass
+        elif choice == "3":
+            print("\n[Sección Activa] Has entrado a: Stream de actividad en tiempo real.")
+            pass
+        elif choice == "4":
+            print("\n[Sección Activa] Has entrado a: Registro de interacciones y likes recientes.")
+            pass
+        elif choice == "5":
+            print("\n[Sección Activa] Has entrado a: Películas en tendencia de la semana.")
+            pass
+        else:
+            print("\n[!] Opción inválida.")
+
+        input("\nPresiona [Enter] para continuar...")
+
+
+# ==============================================================================
 # SUBMENÚ: TALENTO (ACTORES Y DIRECTORES)
 # ==============================================================================
 
@@ -216,13 +258,14 @@ def main() -> None:
         print("MENÚ PRINCIPAL (POR FEATURES):")
         print("  1. Películas                  -> Búsquedas, filtros por género, país, rating y elenco")
         print("  2. Reseñas                    -> Búsqueda de reseñas por palabras clave y popularidad")
-        print("  3. Actores y Directores       -> Impacto de actores, filmografías y perfiles de directores")
-        print("  4. Usuarios y Estadísticas    -> Resumen histórico anual y estadísticas estilo Wrapped")
-        print("  5. Motor de Recomendaciones   -> Algoritmos de recomendación social y de contenido")
+        print("  3. Actividad Reciente y Feed  -> Reseñas recientes y actividad social")
+        print("  4. Actores y Directores       -> Impacto de actores, filmografías y perfiles de directores")
+        print("  5. Usuarios y Estadísticas    -> Resumen histórico anual y estadísticas estilo Wrapped")
+        print("  6. Motor de Recomendaciones   -> Algoritmos de recomendación social y de contenido")
         print("  0. Salir")
         print("=" * 72)
 
-        choice = input("Selecciona un módulo [0-5]: ").strip()
+        choice = input("Selecciona un módulo [0-6]: ").strip()
 
         if choice == "0":
             print("\n¡Gracias por usar MovieVault! Hasta pronto.\n")
@@ -232,13 +275,15 @@ def main() -> None:
         elif choice == "2":
             submenu_reviews()
         elif choice == "3":
-            submenu_talent()
+            submenu_activity()
         elif choice == "4":
-            submenu_users()
+            submenu_talent()
         elif choice == "5":
+            submenu_users()
+        elif choice == "6":
             submenu_recommendations()
         else:
-            print("\n[!] Opción inválida. Elige entre 0 y 5.")
+            print("\n[!] Opción inválida. Elige entre 0 y 6.")
             input("Presiona [Enter] para reintentar...")
 
 
