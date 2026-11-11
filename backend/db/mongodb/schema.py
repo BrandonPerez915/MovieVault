@@ -76,6 +76,7 @@ MOVIES_VALIDATOR: Dict[str, Any] = {
         "required": [
             "title",
             "release_year",
+            "poster_url",
             "decade",
             "language",
             "genres",
@@ -85,6 +86,8 @@ MOVIES_VALIDATOR: Dict[str, Any] = {
             "synopsis",
             "rating",
             "ratings_count",
+            "likes",
+            "awards",
             "impact_score",
         ],
         "properties": {
@@ -97,6 +100,10 @@ MOVIES_VALIDATOR: Dict[str, Any] = {
                 "minimum": 1888,
                 "maximum": 2100,
                 "description": "Release year (4-digit integer).",
+            },
+            "poster_url": {
+                "bsonType": "string",
+                "description": "URL to the movie's poster image.",
             },
             "decade": {
                 "bsonType": "int",
@@ -161,10 +168,25 @@ MOVIES_VALIDATOR: Dict[str, Any] = {
                 "minimum": 0,
                 "description": "Total count of rating submissions received.",
             },
+            "likes": {
+                "bsonType": "int",
+                "minimum": 0,
+                "description": "Total number of likes received.",
+            },
+            "awards": {
+                "bsonType": "array",
+                "items": {"bsonType": "string"},
+                "description": "List of awards won or nominated for.",
+            },
             "impact_score": {
                 "bsonType": ["double", "int"],
                 "description": "Calculated impact metric: avg_rating * log10(1 + total_ratings).",
             },
+            "available_streaming": {
+                "bsonType": "array",
+                "items": {"bsonType": "string"},
+                "description": "List of streaming platforms where the movie is available.",
+            }
         },
     }
 }
