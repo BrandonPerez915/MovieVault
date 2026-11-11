@@ -7,7 +7,7 @@ all three architectural database engines:
 3. Dgraph (Graph database: Knowledge graphs, Actor-Director collaboration graphs, Social following)
 """
 
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 
 from db.mongodb.connection import MongoDBConnection
 from db.cassandra.connection import CassandraConnection
@@ -32,15 +32,46 @@ class UnifiedDatabaseConnection:
         if getattr(self, "_initialized", False):
             return
 
-        self._mongo_client = MongoDBConnection().client
-        self._mongo_db = MongoDBConnection().database
-        self._mongo_status = "INITIALIZED"
+        self._mongo_client = None
+        self._mongo_db = None
+        self._mongo_status = "NOT_INITIALIZED"
 
-        self._cassandra_session = CassandraConnection().session
-        self._cassandra_status = "INITIALIZED"
+        self._cassandra_session = None
+        self._cassandra_status = "NOT_INITIALIZED"
 
-        self._dgraph_client = DgraphConnection().client
-        self._dgraph_status = "INITIALIZED"
+        self._dgraph_client = None
+        self._dgraph_status = "NOT_INITIALIZED"
+
+        # 1. MongoDB
+        if MongoDBConnection:
+            try:
+                self._mongo_client = MongoDBConnection.instance().client
+                self._mongo_db = MongoDBConnection.instance().database
+                self._mongo_status = "INITIALIZED"
+            except Exception as e:
+                self._mongo_status = f"STANDBY ({type(e).__name__})"
+        else:
+            self._mongo_status = "STANDBY (Driver not installed)"
+
+        # 2. Cassandra
+        if CassandraConnection:
+            try:
+                self._cassandra_session = CassandraConnection.instance().session
+                self._cassandra_status = "INITIALIZED"
+            except Exception as e:
+                self._cassandra_status = f"STANDBY ({type(e).__name__})"
+        else:
+            self._cassandra_status = "STANDBY (Driver not installed)"
+
+        # 3. Dgraph
+        if DgraphConnection:
+            try:
+                self._dgraph_client = DgraphConnection.instance().client
+                self._dgraph_status = "INITIALIZED"
+            except Exception as e:
+                self._dgraph_status = f"STANDBY ({type(e).__name__})"
+        else:
+            self._dgraph_status = "STANDBY (Driver not installed)"
 
         self._initialized = True
 
@@ -94,7 +125,6 @@ def get_hub() -> UnifiedDatabaseConnection:
     return UnifiedDatabaseConnection.get_instance()
 
 
-
 def get_mongodb() -> MongoDBConnection:
     """Convenience getter for MongoDB."""
     return get_hub().get_mongodb()
@@ -108,4 +138,15 @@ def get_cassandra() -> CassandraConnection:
 def get_dgraph() -> DgraphConnection:
     """Convenience getter for Dgraph."""
     return get_hub().get_dgraph()
+
+
+def print_database_status() -> None:
+    """Prints diagnostic table of all database engines."""
+    statuses = get_hub().get_status()
+    print("\n" + "=" * 70)
+    print(" MOVIEVAULT UNIFIED DATABASE STATUS")
+    print("=" * 70)
+    for db_name, status in statuses.items():
+        print(f" • {db_name.ljust(35)}: {status}")
+    print("=" * 70 + "\n")
 

@@ -1,12 +1,10 @@
 from pathlib import Path
-import dotenv
 import os
+import dotenv
 
-# Base directory paths
-BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
+BACKEND_DIR = Path(__file__).resolve().parent
 ROOT_DIR = BACKEND_DIR.parent
 ENV_FILE = ROOT_DIR / ".env"
-
 dotenv.load_dotenv(dotenv_path=ENV_FILE)
 
 DEFAULT_MONGO_URI = os.getenv("MONGO_URI") or "mongodb://localhost:27017/"
