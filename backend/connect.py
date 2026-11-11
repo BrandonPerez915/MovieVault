@@ -7,95 +7,11 @@ all three architectural database engines:
 3. Dgraph (Graph database: Knowledge graphs, Actor-Director collaboration graphs, Social following)
 """
 
-import os
-from abc import ABC, abstractmethod
-from datetime import datetime, timezone
-from typing import Dict, Any, Optional, List
+from typing import Dict, Optional
 
-
-class DBSession(ABC):
-    """
-    Abstract base class for database sessions.
-    Defines the interface for connecting, closing, and checking the status of a database session.
-    """
-
-    @abstractmethod
-    def connect(self) -> None:
-        """Establishes a connection to the database."""
-        pass
-
-    @abstractmethod
-    def close(self) -> None:
-        """Closes the database connection."""
-        pass
-
-    @abstractmethod
-    def get_status(self) -> str:
-        """Returns the current status of the database session."""
-        pass
-
-class MongoDBSession(DBSession):
-    """
-    MongoDB Session Manager.
-    Manages the connection to the MongoDB database, ensuring a single shared instance
-    of the MongoClient and Database throughout the application lifecycle.
-    """
-
-    def connect(self) -> None:
-        """Establishes a connection to the MongoDB database."""
-        pass
-
-    def close(self) -> None:
-        """Closes the MongoDB connection."""
-        pass
-
-    def get_status(self) -> str:
-        """Returns the current status of the MongoDB session."""
-        return "MongoDB session is active."
-
-
-class CassandraSession(DBSession):
-    """
-    Apache Cassandra CQL Session.
-    Emulates distributed columnar storage for high-throughput activity logs,
-    and social interaction events.
-    """
-    pass
-
-    def connect(self) -> None:
-        """Establishes a connection to the Cassandra cluster."""
-        pass
-
-    def close(self) -> None:
-        """Closes the Cassandra session."""
-        pass
-
-    def get_status(self) -> str:
-        """Returns the current status of the Cassandra session."""
-        return "Cassandra session is active."
-
-
-class DgraphSession(DBSession):
-    """
-    Simulated Dgraph gRPC Client.
-    Emulates graph operations for multi-hop traversals:
-    - Directed co-acting network: (Actor)-[:ACTED_IN]->(Movie)<-[:ACTED_IN]-(CoActor)
-    - Directorial collaboration: (Director)-[:DIRECTED]->(Movie)
-    - Social graph: (User)-[:FOLLOWS]->(User)
-    """
-    pass
-
-    def connect(self) -> None:
-        """Establishes a connection to the Dgraph server."""
-        pass
-
-    def close(self) -> None:
-        """Closes the Dgraph session."""
-        pass
-
-    def get_status(self) -> str:
-        """Returns the current status of the Dgraph session."""
-        return "Dgraph session is active."
+from db.mongodb.connection import MongoDBConnection
+from db.cassandra.connection import CassandraConnection
+from db.dgraph.connection import DgraphConnection
 
 
 class UnifiedDatabaseConnection:
@@ -116,17 +32,16 @@ class UnifiedDatabaseConnection:
         if getattr(self, "_initialized", False):
             return
 
-        self._mongo_client = None
-        self._mongo_db = None
-        self._mongo_status = "NOT_INITIALIZED"
+        self._mongo_client = MongoDBConnection().client
+        self._mongo_db = MongoDBConnection().database
+        self._mongo_status = "INITIALIZED"
 
-        self._cassandra_session = None
-        self._cassandra_status = "NOT_INITIALIZED"
+        self._cassandra_session = CassandraConnection().session
+        self._cassandra_status = "INITIALIZED"
 
-        self._dgraph_client = None
-        self._dgraph_status = "NOT_INITIALIZED"
+        self._dgraph_client = DgraphConnection().client
+        self._dgraph_status = "INITIALIZED"
 
-        self.connect_all()
         self._initialized = True
 
     @classmethod
@@ -139,15 +54,15 @@ class UnifiedDatabaseConnection:
         """Initializes all database connections with real or simulated handlers."""
         pass
 
-    def get_mongodb(self) -> MongoDBSession:
+    def get_mongodb(self) -> MongoDBConnection:
         """Returns the active MongoDB database instance."""
         return self._mongo_db
 
-    def get_cassandra(self) -> CassandraSession:
+    def get_cassandra(self) -> CassandraConnection:
         """Returns the active Cassandra session."""
         return self._cassandra_session
 
-    def get_dgraph(self) -> DgraphSession:
+    def get_dgraph(self) -> DgraphConnection:
         """Returns the active Dgraph client."""
         return self._dgraph_client
 
@@ -179,17 +94,18 @@ def get_hub() -> UnifiedDatabaseConnection:
     return UnifiedDatabaseConnection.get_instance()
 
 
-def get_mongodb() -> MongoDBSession:
+
+def get_mongodb() -> MongoDBConnection:
     """Convenience getter for MongoDB."""
     return get_hub().get_mongodb()
 
 
-def get_cassandra() -> CassandraSession:
+def get_cassandra() -> CassandraConnection:
     """Convenience getter for Cassandra."""
     return get_hub().get_cassandra()
 
 
-def get_dgraph() -> DgraphSession:
+def get_dgraph() -> DgraphConnection:
     """Convenience getter for Dgraph."""
     return get_hub().get_dgraph()
 
