@@ -9,7 +9,7 @@ from typing import Dict, Any
 from pymongo.database import Database
 from pymongo import ASCENDING, DESCENDING, TEXT
 
-from db.mongodb.connection import MongoDBConnection
+from db.mongodb.MongoConnection import MongoConnection
 
 # JSON SCHEMA VALIDATORS
 ACTORS_VALIDATOR: Dict[str, Any] = {
@@ -253,7 +253,7 @@ REVIEWS_VALIDATOR: Dict[str, Any] = {
 USERS_VALIDATOR: Dict[str, Any] = {
     "$jsonSchema": {
         "bsonType": "object",
-        "required": ["username", "email", "created_at", "lists"],
+        "required": ["username", "email", "password_hash", "created_at", "lists"],
         "properties": {
             "username": {
                 "bsonType": "string",
@@ -262,6 +262,10 @@ USERS_VALIDATOR: Dict[str, Any] = {
             "email": {
                 "bsonType": "string",
                 "description": "Unique email address.",
+            },
+            "password_hash": {
+                "bsonType": "string",
+                "description": "Cryptographic password hash (bcrypt or PBKDF2-SHA256).",
             },
             "created_at": {
                 "bsonType": "date",
@@ -282,7 +286,7 @@ USERS_VALIDATOR: Dict[str, Any] = {
                                 "properties": {
                                     "id": {"bsonType": "objectId"},
                                     "title": {"bsonType": "string"},
-                                    "poster_url": {"bsonType": "string"},  
+                                    "poster_url": {"bsonType": "string"},
                                 }
                             },
                         },
@@ -331,8 +335,8 @@ LISTS_VALIDATOR: Dict[str, Any] = {
 
 
 def create_collection(
-    database: Database, 
-    name: str, 
+    database: Database,
+    name: str,
     validator: Dict[str, Any]
 ) -> None:
     """Creates a collection with a JSON Schema validator or updates it if it already exists."""
@@ -355,7 +359,7 @@ def create_indexes(database: Database) -> None:
     Creates optimal indexes in MongoDB to satisfy the requirements across collections:
     - actors: index on name
     - directors: index on name
-    - movies: 
+    - movies:
         compound indexes for decade/language.original/impact, genre/country/impact,rating/directors.name/decade/impact, movie.title/synopsis/impact, cast.name/impact, directors.name/impact, and single-field index on impact_score.
     - reviews: content/movie.title/likes/comments, owner.username/created_at
     - users: unique on username and email
@@ -461,7 +465,7 @@ def create_indexes(database: Database) -> None:
 def setup_schema(database: Database = None) -> Database:
     """Entry point to initialize all collections and indexes in MongoDB."""
     if database is None:
-        database = MongoDBConnection().database
+        database = MongoConnection().database
 
     print(f"Initializing schema on database: '{database.name}'...")
     create_collection(database, "actors", ACTORS_VALIDATOR)
