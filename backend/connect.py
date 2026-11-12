@@ -7,11 +7,24 @@ all three architectural database engines:
 3. Dgraph (Graph database: Knowledge graphs, Actor-Director collaboration graphs, Social following)
 """
 
-from typing import Dict, Optional, Any
+from typing import Dict, Optional
 
-from db.mongodb.connection import MongoDBConnection
-from db.cassandra.connection import CassandraConnection
-from db.dgraph.connection import DgraphConnection
+from config import (
+    MONGO_URL,
+    MONGO_DATABASE_NAME,
+
+    CASSANDRA_HOST,
+    CASSANDRA_PORT,
+    CASSANDRA_KEYSPACE,
+
+    DGRAPH_HOST,
+    DGRAPH_PORT,
+)
+from databases import (
+    CassandraConnection,
+    MongoConnection,
+    DgraphConnection
+)
 
 
 class UnifiedDatabaseConnection:
@@ -28,12 +41,13 @@ class UnifiedDatabaseConnection:
             cls._instance._initialized = False
         return cls._instance
 
+
     def __init__(self) -> None:
         if getattr(self, "_initialized", False):
             return
 
         self._mongo_client = None
-        self._mongo_db = None
+        self._mongo_database = None
         self._mongo_status = "NOT_INITIALIZED"
 
         self._cassandra_session = None
@@ -42,38 +56,56 @@ class UnifiedDatabaseConnection:
         self._dgraph_client = None
         self._dgraph_status = "NOT_INITIALIZED"
 
-        # 1. MongoDB
-        if MongoDBConnection:
-            try:
-                self._mongo_client = MongoDBConnection.instance().client
-                self._mongo_db = MongoDBConnection.instance().database
+        # Initialize connections. Its necessary to call instance with parameters once to configure each database.
+        self._mongo_connection = MongoConnection().instance(
+            MONGO_URL,
+            MONGO_DATABASE_NAME
+        )
+        self._cassandra_connection = CassandraConnection().instance(
+            CASSANDRA_HOST,
+            CASSANDRA_PORT,
+            CASSANDRA_KEYSPACE
+        )
+        self._dgraph_connection = DgraphConnection().instance(
+            f"{DGRAPH_HOST}:{DGRAPH_PORT}"
+        )
+
+        # MongoDB
+        try:
+            self._mongo_client = self._mongo_connection.client
+            self._mongo_database = self._mongo_connection.database
+            if self._mongo_connection.initialized:
                 self._mongo_status = "INITIALIZED"
-            except Exception as e:
-                self._mongo_status = f"STANDBY ({type(e).__name__})"
-        else:
-            self._mongo_status = "STANDBY (Driver not installed)"
+            else:
+                self._mongo_status = "STANDBY (Not initialized)"
+        except Exception as e:
+            self._mongo_status = f"STANDBY ({type(e).__name__})"
 
-        # 2. Cassandra
-        if CassandraConnection:
-            try:
-                self._cassandra_session = CassandraConnection.instance().session
+        # Cassandra
+        try:
+            self._cassandra_session = self._cassandra_connection.session
+            self._cassandra_keyspace = self._cassandra_connection.keyspace
+            self._cassandra_cluster = self._cassandra_connection.cluster
+            if self._cassandra_connection.initialized:
                 self._cassandra_status = "INITIALIZED"
-            except Exception as e:
-                self._cassandra_status = f"STANDBY ({type(e).__name__})"
-        else:
-            self._cassandra_status = "STANDBY (Driver not installed)"
+            else:
+                self._cassandra_status = "STANDBY (Not initialized)"
+        except Exception as e:
+            self._cassandra_status = f"STANDBY ({type(e).__name__})"
 
-        # 3. Dgraph
-        if DgraphConnection:
-            try:
-                self._dgraph_client = DgraphConnection.instance().client
+        # Dgraph
+        try:
+            self._dgraph_client = self._dgraph_connection.client
+            self._dgraph_stub = self._dgraph_connection.stub
+            if self._dgraph_connection.initialized:
                 self._dgraph_status = "INITIALIZED"
-            except Exception as e:
-                self._dgraph_status = f"STANDBY ({type(e).__name__})"
-        else:
-            self._dgraph_status = "STANDBY (Driver not installed)"
+            else:
+                self._dgraph_status = "STANDBY (Not initialized)"
+        except Exception as e:
+            self._dgraph_status = f"STANDBY ({type(e).__name__})"
 
         self._initialized = True
+
 
     @classmethod
     def get_instance(cls) -> "UnifiedDatabaseConnection":
@@ -81,72 +113,52 @@ class UnifiedDatabaseConnection:
             cls()
         return cls._instance
 
-    def connect_all(self) -> None:
-        """Initializes all database connections with real or simulated handlers."""
-        pass
 
-    def get_mongodb(self) -> MongoDBConnection:
+    @property
+    def mongodb(self) -> MongoConnection:
         """Returns the active MongoDB database instance."""
-        return self._mongo_db
+        return self._mongo_database
 
-    def get_cassandra(self) -> CassandraConnection:
+
+    @property
+    def cassandra(self) -> CassandraConnection:
         """Returns the active Cassandra session."""
         return self._cassandra_session
 
-    def get_dgraph(self) -> DgraphConnection:
+
+    @property
+    def dgraph(self) -> DgraphConnection:
         """Returns the active Dgraph client."""
         return self._dgraph_client
 
-    def get_status(self) -> Dict[str, str]:
+
+    @property
+    def status(self) -> Dict[str, str]:
         """Returns the health status of all connected database engines."""
         return {
-            "MongoDB (Document Store)": self._mongo_status,
-            "Cassandra (Activity Log Stream)": self._cassandra_status,
-            "Dgraph (Knowledge & Social Graph)": self._dgraph_status,
+            "mongodb": self._mongo_status,
+            "cassandra": self._cassandra_status,
+            "dgraph": self._dgraph_status,
         }
 
-    def close_all(self) -> None:
+
+    def close(self) -> None:
         """Closes all open database connections."""
-        if self._cassandra_session:
-            self._cassandra_session.close()
-            self._cassandra_status = "CLOSED"
-        if self._dgraph_client:
-            self._dgraph_client.close()
-            self._dgraph_status = "CLOSED"
-        try:
-            from db.mongodb.connection import close_connection
-            close_connection()
-            self._mongo_status = "CLOSED"
-        except Exception:
-            pass
+        self._mongo_connection.close()
+        self._mongo_connection = None
+        self._mongo_client = None
+        self._mongo_database = None
+        self._mongo_status = "CLOSED"
 
-def get_hub() -> UnifiedDatabaseConnection:
-    """Returns the Unified Database Connection Hub."""
-    return UnifiedDatabaseConnection.get_instance()
+        self._cassandra_connection.close()
+        self._cassandra_connection = None
+        self._cassandra_session = None
+        self._cassandra_keyspace = None
+        self._cassandra_cluster = None
+        self._cassandra_status = "CLOSED"
 
-
-def get_mongodb() -> MongoDBConnection:
-    """Convenience getter for MongoDB."""
-    return get_hub().get_mongodb()
-
-
-def get_cassandra() -> CassandraConnection:
-    """Convenience getter for Cassandra."""
-    return get_hub().get_cassandra()
-
-
-def get_dgraph() -> DgraphConnection:
-    """Convenience getter for Dgraph."""
-    return get_hub().get_dgraph()
-
-
-def print_database_status() -> None:
-    """Prints diagnostic table of all database engines."""
-    statuses = get_hub().get_status()
-    print("\n" + "=" * 70)
-    print(" MOVIEVAULT UNIFIED DATABASE STATUS")
-    print("=" * 70)
-    for db_name, status in statuses.items():
-        print(f" • {db_name.ljust(35)}: {status}")
-    print("=" * 70 + "\n")
-
+        self._dgraph_connection.close()
+        self._dgraph_connection = None
+        self._dgraph_client = None
+        self._dgraph_stub = None
+        self._dgraph_status = "CLOSED"

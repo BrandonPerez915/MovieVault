@@ -7,4 +7,4 @@ name = "movievault"
 version = "0.1.0"
 
 [tool.setuptools]
-packages = ["db", "data", "services"]
+packages = ["db", "data", "services", "tui"]
